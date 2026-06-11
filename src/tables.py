@@ -1,16 +1,15 @@
-import pandas as pd
+import inspect
+from typing import Any, Dict, List, Union,Callable
+
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
-import inspect
 import torch.optim as optim
-from typing import Dict, List, Any, Union
-from sksurv.metrics import (
-    concordance_index_ipcw,
-    integrated_brier_score,
-    cumulative_dynamic_auc,
-)
-from src.data_prep import prepare_survival_data, digitize_time
+from sksurv.metrics import (concordance_index_ipcw, cumulative_dynamic_auc,
+                            integrated_brier_score)
+
+from src.data_prep import digitize_time, prepare_survival_data
 from src.metrics import compute_cox_cif
 from src.models import FinalTransformerModel
 
@@ -77,7 +76,7 @@ def build_table_2_metrics(
     X_test_tensor: torch.Tensor,
     bins: np.ndarray,
     brier_times: Union[List[float], np.ndarray],
-    times_to_evaluate: List[int] = [24, 60, 120],
+    times_to_evaluate: List[float] = [24.0, 60.0, 120.0],
 ) -> pd.DataFrame:
 
     unified_results = []
@@ -92,8 +91,16 @@ def build_table_2_metrics(
     # Загальне виживання для Cox
     surv_fns_1 = models_cox[1].predict_survival_function(X_test_scaled)
     surv_fns_2 = models_cox[2].predict_survival_function(X_test_scaled)
-    surv_fns_overall = [
-        (lambda t, i=i: surv_fns_1[i](t) * surv_fns_2[i](t))
+    def make_combined_surv_fn(
+        fn1: Callable[[float], float], 
+        fn2: Callable[[float], float]
+    ) -> Callable[[float], float]:
+        def combined(t: float) -> float:
+            return float(fn1(t) * fn2(t))
+        return combined
+
+    surv_fns_overall: List[Callable[[float], float]] = [
+        make_combined_surv_fn(surv_fns_1[i], surv_fns_2[i])
         for i in range(len(surv_fns_1))
     ]
 
@@ -108,7 +115,7 @@ def build_table_2_metrics(
             c_index_cox = concordance_index_ipcw(
                 y_train_cause, y_test_cause, cox_risk_static
             )[0]
-        except:
+        except Exception:
             c_index_cox = np.nan
 
         surv_fns_k = model_cox.predict_survival_function(X_test_scaled)
@@ -120,7 +127,7 @@ def build_table_2_metrics(
             auc_cox, _ = cumulative_dynamic_auc(
                 y_train_cause, y_test_cause, cif_at_horizons, times_to_evaluate
             )
-        except:
+        except Exception:
             auc_cox = [np.nan, np.nan, np.nan]
 
         cif_matrix_brier = compute_cox_cif(surv_fns_k, surv_fns_overall, brier_times)
@@ -128,7 +135,7 @@ def build_table_2_metrics(
             ibs_cox = integrated_brier_score(
                 y_train_cause, y_test_cause, 1.0 - cif_matrix_brier, brier_times
             )
-        except:
+        except Exception:
             ibs_cox = np.nan
 
         unified_results.append(
@@ -153,7 +160,7 @@ def build_table_2_metrics(
                 c_index_fg = concordance_index_ipcw(
                     y_train_cause, y_test_cause, cif_final
                 )[0]
-            except:
+            except Exception:
                 c_index_fg = np.nan
 
             auc_fg = []
@@ -166,7 +173,7 @@ def build_table_2_metrics(
                         y_train_cause, y_test_cause, risk_at_t_fg, np.array([t])
                     )
                     auc_fg.append(auc_t_fg[0])
-                except:
+                except Exception:
                     auc_fg.append(np.nan)
 
             try:
@@ -176,7 +183,7 @@ def build_table_2_metrics(
                 ibs_fg = integrated_brier_score(
                     y_train_cause, y_test_cause, 1.0 - cif_brier, brier_times
                 )
-            except:
+            except Exception:
                 ibs_fg = np.nan
 
             unified_results.append(
@@ -204,7 +211,7 @@ def build_table_2_metrics(
                 c_index_tr = concordance_index_ipcw(
                     y_train_cause, y_test_cause, cif_cause[:, -1]
                 )[0]
-            except:
+            except Exception:
                 c_index_tr = np.nan
 
             try:
@@ -214,7 +221,7 @@ def build_table_2_metrics(
                     1.0 - cif_cause[:, brier_time_indices],
                     brier_times,
                 )
-            except:
+            except Exception:
                 ibs_tr = np.nan
 
             auc_tr = []
@@ -227,7 +234,7 @@ def build_table_2_metrics(
                         np.array([times_to_evaluate[i]]),
                     )
                     auc_tr.append(auc_t[0])
-                except:
+                except Exception:
                     auc_tr.append(np.nan)
 
             unified_results.append(
@@ -250,17 +257,17 @@ def build_table_2_metrics(
 
 
 def build_table_3_hyperparams(
-    model_instance: nn.Module,
+    model_instance: Any,
     batch_size: int = 64,
     lr: float = 0.001,
     num_bins: int = 20,
     patience: int = 15,
 ) -> pd.DataFrame:
-
     try:
         current_d_model = model_instance.feature_proj.out_features
     except AttributeError:
         current_d_model = "N/A"
+    
 
     model_sig = inspect.signature(FinalTransformerModel.__init__)
     current_n_heads = (

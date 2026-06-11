@@ -1,9 +1,10 @@
+from typing import Callable, List, Union,Sequence
+
 import numpy as np
-from typing import List, Union, Callable
 
 
 def compute_cox_cif(
-    surv_fns_k: Union[np.ndarray, List[Callable[[float], float]]],
+    surv_fns_k: Sequence[Callable[[float], float]],
     surv_fns_all: Union[np.ndarray, List[Callable[[float], float]]],
     times: Union[List[float], np.ndarray],
 ) -> np.ndarray:

@@ -1,7 +1,8 @@
+from typing import Tuple
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Tuple
 
 
 class MonotonicAttention(nn.Module):
@@ -78,6 +79,8 @@ class FinalTransformerModel(nn.Module):
 
         self.feature_proj = nn.Linear(n_features, d_model)
         self.time_embeddings = nn.Parameter(torch.randn(T, d_model))
+
+        self.encoder: nn.Module
 
         if variant == "A":
             encoder_layer = nn.TransformerEncoderLayer(

@@ -1,11 +1,13 @@
+from typing import Any, Dict, List, Union, Optional
+
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 from sksurv.nonparametric import kaplan_meier_estimator
+
 from src.data_prep import digitize_time, prepare_survival_data
-from typing import List, Union, Any, Dict
-import pandas as pd
 
 
 def plot_loss_curves(
@@ -133,7 +135,7 @@ def plot_calibration_curves_survival(
     df_test: pd.DataFrame,
     bins: np.ndarray,
     target_time: float = 60.0,
-    max_limits: Dict[int, float] = None,
+    max_limits: Optional[Dict[int, float]] = None,
 ) -> None:
 
     if max_limits is None:

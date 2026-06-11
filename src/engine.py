@@ -1,10 +1,12 @@
+import copy
+from typing import List, Tuple,Optional,Dict,Any
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import copy
-from src.models import FinalTransformerModel
-from typing import List, Tuple
 from torch.utils.data import DataLoader
+
+from src.models import FinalTransformerModel
 
 
 class CompetingRisksLoss(nn.Module):
@@ -20,7 +22,7 @@ class CompetingRisksLoss(nn.Module):
         time_indices: torch.Tensor,
     ) -> torch.Tensor:
         batch_size = hazards.size(0)
-        loss = 0.0
+        loss: torch.Tensor = torch.tensor(0.0, device=hazards.device)
         S_t_minus_1 = torch.cat(
             [torch.ones(batch_size, 1, device=hazards.device), S_t[:, :-1]], dim=1
         )
@@ -63,14 +65,15 @@ def train_model_with_history(
     criterion = CompetingRisksLoss()
 
     best_val_loss = float("inf")
-    best_weights = None
+    best_weights: Optional[Dict[str, Any]] = None
     epochs_no_improve = 0
 
-    train_history, val_history = [], []
+    train_history: List[float] = []
+    val_history: List[float] = []
 
     for epoch in range(max_epochs):
         model.train()
-        train_loss = 0
+        train_loss:float = 0.0
         for batch_X, batch_events, batch_times in train_loader:
             optimizer.zero_grad()
             hazards, S_t, _ = model(batch_X)
@@ -82,7 +85,7 @@ def train_model_with_history(
         train_history.append(train_loss)
 
         model.eval()
-        val_loss = 0
+        val_loss:float = 0.0
         with torch.no_grad():
             for batch_X, batch_events, batch_times in val_loader:
                 hazards, S_t, _ = model(batch_X)
@@ -109,5 +112,6 @@ def train_model_with_history(
             )
             break
 
-    model.load_state_dict(best_weights)
+    if best_weights is not None:
+        model.load_state_dict(best_weights)
     return model, train_history, val_history
