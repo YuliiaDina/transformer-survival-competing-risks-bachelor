@@ -1,10 +1,11 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from typing import Tuple
 
 
 class MonotonicAttention(nn.Module):
-    def __init__(self, d_model, n_heads):
+    def __init__(self, d_model: int, n_heads: int) -> None:
         super().__init__()
         self.n_heads = n_heads
         self.d_k = d_model // n_heads
@@ -14,7 +15,7 @@ class MonotonicAttention(nn.Module):
         self.v_linear = nn.Linear(d_model, d_model)
         self.out_proj = nn.Linear(d_model, d_model)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         batch_size, seq_len, d_model = x.size()
 
         q = (
@@ -44,7 +45,7 @@ class MonotonicAttention(nn.Module):
 
 
 class MonotonicTransformerLayer(nn.Module):
-    def __init__(self, d_model, n_heads):
+    def __init__(self, d_model: int, n_heads: int) -> None:
         super().__init__()
         self.attention = MonotonicAttention(d_model, n_heads)
         self.norm1 = nn.LayerNorm(d_model)
@@ -53,7 +54,7 @@ class MonotonicTransformerLayer(nn.Module):
             nn.Linear(d_model, d_model * 4), nn.GELU(), nn.Linear(d_model * 4, d_model)
         )
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.norm1(x + self.attention(x))
         x = self.norm2(x + self.ffn(x))
         return x
@@ -61,8 +62,15 @@ class MonotonicTransformerLayer(nn.Module):
 
 class FinalTransformerModel(nn.Module):
     def __init__(
-        self, n_features, variant="A", d_model=32, n_heads=2, num_layers=2, T=20, K=2
-    ):
+        self,
+        n_features: int,
+        variant: str = "A",
+        d_model: int = 32,
+        n_heads: int = 2,
+        num_layers: int = 2,
+        T: int = 20,
+        K: int = 2,
+    ) -> None:
         super().__init__()
         self.T = T
         self.K = K
@@ -87,7 +95,9 @@ class FinalTransformerModel(nn.Module):
 
         self.output_proj = nn.Linear(d_model, K + 1)
 
-    def forward(self, x):
+    def forward(
+        self, x: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         batch_size = x.size(0)
         e_i = self.feature_proj(x)
         seq_input = e_i.unsqueeze(1) + self.time_embeddings.unsqueeze(0)

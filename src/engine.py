@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch.optim as optim
 import copy
 from src.models import FinalTransformerModel
+from typing import List, Tuple
+from torch.utils.data import DataLoader
 
 
 class CompetingRisksLoss(nn.Module):
@@ -10,7 +12,13 @@ class CompetingRisksLoss(nn.Module):
         super().__init__()
         self.eps = 1e-7
 
-    def forward(self, hazards, S_t, events, time_indices):
+    def forward(
+        self,
+        hazards: torch.Tensor,
+        S_t: torch.Tensor,
+        events: torch.Tensor,
+        time_indices: torch.Tensor,
+    ) -> torch.Tensor:
         batch_size = hazards.size(0)
         loss = 0.0
         S_t_minus_1 = torch.cat(
@@ -33,14 +41,14 @@ class CompetingRisksLoss(nn.Module):
 
 
 def train_model_with_history(
-    variant_name,
-    train_loader,
-    val_loader,
-    n_features,
-    num_bins,
-    max_epochs=200,
-    patience=15,
-):
+    variant_name: str,
+    train_loader: DataLoader,
+    val_loader: DataLoader,
+    n_features: int,
+    num_bins: int,
+    max_epochs: int = 200,
+    patience: int = 15,
+) -> Tuple[nn.Module, List[float], List[float]]:
     print(f"\n[Trainer] Запуск навчання для Variant {variant_name}...")
     model = FinalTransformerModel(
         n_features=n_features,

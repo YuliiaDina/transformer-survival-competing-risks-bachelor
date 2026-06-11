@@ -1,11 +1,19 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import torch.nn as nn
 from sksurv.nonparametric import kaplan_meier_estimator
 from src.data_prep import digitize_time, prepare_survival_data
+from typing import List, Union, Any, Dict
+import pandas as pd
 
 
-def plot_loss_curves(train_hist_A, val_hist_A, train_hist_B, val_hist_B):
+def plot_loss_curves(
+    train_hist_A: List[float],
+    val_hist_A: List[float],
+    train_hist_B: List[float],
+    val_hist_B: List[float],
+) -> None:
 
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
@@ -29,8 +37,14 @@ def plot_loss_curves(train_hist_A, val_hist_A, train_hist_B, val_hist_B):
 
 
 def plot_cif_comparison(
-    models_cox, model_A, model_B, X_test_scaled, X_test_tensor, brier_times, bins
-):
+    models_cox: Dict[int, Any],
+    model_A: nn.Module,
+    model_B: nn.Module,
+    X_test_scaled: pd.DataFrame,
+    X_test_tensor: torch.Tensor,
+    brier_times: Union[List[float], np.ndarray],
+    bins: np.ndarray,
+) -> None:
 
     patients_to_plot = X_test_scaled.iloc[0:2]
     patients_tensor = X_test_tensor[0:2]
@@ -101,7 +115,7 @@ def plot_cif_comparison(
     plt.show()
 
 
-def get_observed_incidence(y_true, t_eval):
+def get_observed_incidence(y_true: np.ndarray, t_eval: float) -> float:
 
     times, survival_probs = kaplan_meier_estimator(y_true["event"], y_true["time"])
     valid_idx = np.where(times <= t_eval)[0]
@@ -111,15 +125,15 @@ def get_observed_incidence(y_true, t_eval):
 
 
 def plot_calibration_curves_survival(
-    models_cox,
-    model_A_hist,
-    model_B_hist,
-    X_test_scaled,
-    X_test_tensor,
-    df_test,
-    bins,
-    target_time=60,
-):
+    models_cox: Dict[int, Any],
+    model_A_hist: nn.Module,
+    model_B_hist: nn.Module,
+    X_test_scaled: pd.DataFrame,
+    X_test_tensor: torch.Tensor,
+    df_test: pd.DataFrame,
+    bins: np.ndarray,
+    target_time: float = 60.0,
+) -> None:
 
     target_bin_idx = digitize_time(np.array([target_time]), bins)[0]
 

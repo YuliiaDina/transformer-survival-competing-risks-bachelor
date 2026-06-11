@@ -5,11 +5,12 @@ from torch.utils.data import TensorDataset, DataLoader
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sksurv.util import Surv
+from typing import List, Tuple, Union
 
 
 def load_and_prepare_data(
     url="https://raw.githubusercontent.com/vincentarelbundock/Rdatasets/master/csv/survival/mgus2.csv",
-):
+) -> pd.DataFrame:
     df = pd.read_csv(url)
 
     # Кодування подій та визначення часу
@@ -27,7 +28,11 @@ def load_and_prepare_data(
     return df.dropna(subset=["event_type", "time"])
 
 
-def split_and_scale_data(df, features):
+def split_and_scale_data(
+    df: pd.DataFrame, features: List[str]
+) -> Tuple[
+    pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame
+]:
     # Тестова вибірка (20%)
     df_train_val, df_test = train_test_split(
         df, test_size=0.20, stratify=df["event_type"], random_state=42
@@ -60,7 +65,9 @@ def split_and_scale_data(df, features):
     return df_train, df_val, df_test, X_train_scaled, X_val_scaled, X_test_scaled
 
 
-def create_time_bins(time_array, num_bins=20):
+def create_time_bins(
+    time_array: Union[np.ndarray, pd.Series], num_bins: int = 20
+) -> np.ndarray:
     times = time_array[time_array > 0]
     bins = np.quantile(times, np.linspace(0, 1, num_bins + 1))
     bins[0] = 0.0
@@ -68,15 +75,26 @@ def create_time_bins(time_array, num_bins=20):
     return bins
 
 
-def digitize_time(time_array, bins):
+def digitize_time(
+    time_array: Union[np.ndarray, pd.Series], bins: np.ndarray
+) -> np.ndarray:
     bin_indices = np.digitize(time_array, bins) - 1
     return np.clip(bin_indices, 0, len(bins) - 2)
 
 
 def prepare_tensor_loaders(
-    X_train_s, df_train, X_val_s, df_val, X_test_s, df_test, bins, batch_size=64
-):
-    def to_tensors(X_df, df):
+    X_train_s: pd.DataFrame,
+    df_train: pd.DataFrame,
+    X_val_s: pd.DataFrame,
+    df_val: pd.DataFrame,
+    X_test_s: pd.DataFrame,
+    df_test: pd.DataFrame,
+    bins: np.ndarray,
+    batch_size: int = 64,
+) -> Tuple[DataLoader, DataLoader, torch.Tensor, torch.Tensor, torch.Tensor]:
+    def to_tensors(
+        X_df: pd.DataFrame, df: pd.DataFrame
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         X_tensor = torch.tensor(X_df.values, dtype=torch.float32)
         events_tensor = torch.tensor(df["event_type"].values, dtype=torch.long)
         time_idx = digitize_time(df["time"].values, bins)
@@ -97,6 +115,6 @@ def prepare_tensor_loaders(
     return train_loader, val_loader, X_tr, X_va, X_te
 
 
-def prepare_survival_data(df, target_event):
+def prepare_survival_data(df: pd.DataFrame, target_event: int) -> np.ndarray:
     event_happened = (df["event_type"] == target_event).astype(bool)
     return Surv.from_arrays(event=event_happened, time=df["time"])

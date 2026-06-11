@@ -1,7 +1,8 @@
 import torch
+import torch.nn as nn
 
 
-def run_cif_checks(model, model_name, X_tensor):
+def run_cif_checks(model: nn.Module, model_name: str, X_tensor: torch.Tensor) -> None:
 
     print(f"\nПеревірка для Variant {model_name}:")
     model.eval()

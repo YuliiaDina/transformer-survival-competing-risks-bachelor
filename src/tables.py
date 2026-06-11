@@ -1,8 +1,10 @@
 import pandas as pd
 import numpy as np
 import torch
+import torch.nn as nn
 import inspect
 import torch.optim as optim
+from typing import Dict, List, Any, Union
 from sksurv.metrics import (
     concordance_index_ipcw,
     integrated_brier_score,
@@ -13,7 +15,7 @@ from src.metrics import compute_cox_cif
 from src.models import FinalTransformerModel
 
 
-def build_table_1_demographics(df_original):
+def build_table_1_demographics(df_original: pd.DataFrame) -> pd.DataFrame:
 
     stats_data = []
     # Неперервні характеристики (Mean ± SD)
@@ -65,18 +67,18 @@ def build_table_1_demographics(df_original):
 
 
 def build_table_2_metrics(
-    models_cox,
-    models_fg_python,
-    model_A_hist,
-    model_B_hist,
-    df_train,
-    df_test,
-    X_test_scaled,
-    X_test_tensor,
-    bins,
-    brier_times,
-    times_to_evaluate=[24, 60, 120],
-):
+    models_cox: Dict[int, Any],
+    models_fg_python: Dict[int, Any],
+    model_A_hist: nn.Module,
+    model_B_hist: nn.Module,
+    df_train: pd.DataFrame,
+    df_test: pd.DataFrame,
+    X_test_scaled: pd.DataFrame,
+    X_test_tensor: torch.Tensor,
+    bins: np.ndarray,
+    brier_times: Union[List[float], np.ndarray],
+    times_to_evaluate: List[int] = [24, 60, 120],
+) -> pd.DataFrame:
 
     unified_results = []
 
@@ -248,8 +250,12 @@ def build_table_2_metrics(
 
 
 def build_table_3_hyperparams(
-    model_instance, batch_size=64, lr=0.001, num_bins=20, patience=15
-):
+    model_instance: nn.Module,
+    batch_size: int = 64,
+    lr: float = 0.001,
+    num_bins: int = 20,
+    patience: int = 15,
+) -> pd.DataFrame:
 
     try:
         current_d_model = model_instance.feature_proj.out_features

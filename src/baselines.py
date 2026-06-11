@@ -1,10 +1,15 @@
 import numpy as np
 from sksurv.linear_model import CoxPHSurvivalAnalysis
 from comprisk import FineGrayRegression
+import pandas as pd
 from src.data_prep import prepare_survival_data
+from typing import List, Dict, Any
 
-
-def train_cox_models(df_train, X_train_scaled, causes=[1, 2]):
+def train_cox_models(
+    df_train: pd.DataFrame, 
+    X_train_scaled: pd.DataFrame, 
+    causes: List[int] = [1, 2]
+) -> Dict[int, Any]:
     print("\n[Baselines] Навчання Cause-specific Cox...")
     models_cox = {}
     for cause in causes:
@@ -16,7 +21,11 @@ def train_cox_models(df_train, X_train_scaled, causes=[1, 2]):
     return models_cox
 
 
-def train_fine_gray_models(df_train, X_train_scaled, causes=[1, 2]):
+def train_fine_gray_models(
+    df_train: pd.DataFrame, 
+    X_train_scaled: pd.DataFrame, 
+    causes: List[int] = [1, 2]
+) -> Dict[int, Any]:
     print("\n[Baselines] Навчання Fine-Gray (comprisk)...")
     models_fg = {}
 
