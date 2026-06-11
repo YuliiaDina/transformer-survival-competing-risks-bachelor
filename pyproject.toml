@@ -1,0 +1,21 @@
+[project]
+name = "transformer-survival-competing-risks"
+version = "0.1.0"
+description = "Bachelor thesis on Survival Analysis and Competing Risks using Deep Learning"
+authors = [
+    {name = "Yuliia Besedina"}
+]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.0.0",
+    "pandas>=2.0.0",
+    "numpy>=1.23.0",
+    "scikit-survival>=0.22.0",
+    "comprisk",
+    "matplotlib>=3.7.0",
+    "scikit-learn>=1.2.0"
+]
+
+[tool.poetry]
+package-mode = false
