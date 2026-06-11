@@ -1,5 +1,5 @@
-
 import numpy as np
+
 
 def compute_cox_cif(surv_fns_k, surv_fns_all, times):
     n = len(surv_fns_k)

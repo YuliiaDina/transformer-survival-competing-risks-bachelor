@@ -3,6 +3,7 @@ from sksurv.linear_model import CoxPHSurvivalAnalysis
 from comprisk import FineGrayRegression
 from src.data_prep import prepare_survival_data
 
+
 def train_cox_models(df_train, X_train_scaled, causes=[1, 2]):
     print("\n[Baselines] Навчання Cause-specific Cox...")
     models_cox = {}
@@ -14,14 +15,15 @@ def train_cox_models(df_train, X_train_scaled, causes=[1, 2]):
         print(f" Cox для Події {cause} навчено.")
     return models_cox
 
+
 def train_fine_gray_models(df_train, X_train_scaled, causes=[1, 2]):
     print("\n[Baselines] Навчання Fine-Gray (comprisk)...")
     models_fg = {}
-    
-    time_train = df_train['time'].values
-    event_train = df_train['event_type'].values
+
+    time_train = df_train["time"].values
+    event_train = df_train["event_type"].values
     X_train_vals = X_train_scaled.values
-    
+
     for cause in causes:
         try:
             fg_model = FineGrayRegression(cause=cause)
@@ -30,5 +32,5 @@ def train_fine_gray_models(df_train, X_train_scaled, causes=[1, 2]):
             print(f"Fine-Gray для Події {cause} навчено.")
         except Exception as e:
             print(f" Помилка Fine-Gray для Події {cause}: {e}")
-            
+
     return models_fg

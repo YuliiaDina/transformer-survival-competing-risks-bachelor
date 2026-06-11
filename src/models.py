@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class MonotonicAttention(nn.Module):
     def __init__(self, d_model, n_heads):
         super().__init__()
@@ -16,11 +17,23 @@ class MonotonicAttention(nn.Module):
     def forward(self, x):
         batch_size, seq_len, d_model = x.size()
 
-        q = self.q_linear(x).view(batch_size, seq_len, self.n_heads, self.d_k).transpose(1, 2)
-        k = self.k_linear(x).view(batch_size, seq_len, self.n_heads, self.d_k).transpose(1, 2)
-        v = self.v_linear(x).view(batch_size, seq_len, self.n_heads, self.d_k).transpose(1, 2)
+        q = (
+            self.q_linear(x)
+            .view(batch_size, seq_len, self.n_heads, self.d_k)
+            .transpose(1, 2)
+        )
+        k = (
+            self.k_linear(x)
+            .view(batch_size, seq_len, self.n_heads, self.d_k)
+            .transpose(1, 2)
+        )
+        v = (
+            self.v_linear(x)
+            .view(batch_size, seq_len, self.n_heads, self.d_k)
+            .transpose(1, 2)
+        )
 
-        scores = torch.matmul(q, k.transpose(-2, -1)) / (self.d_k ** 0.5)
+        scores = torch.matmul(q, k.transpose(-2, -1)) / (self.d_k**0.5)
         r = torch.exp(scores)
         c = torch.cumsum(r, dim=-1)
         a = r / (c[..., -1:] + 1e-9)
@@ -29,6 +42,7 @@ class MonotonicAttention(nn.Module):
         out = out.transpose(1, 2).contiguous().view(batch_size, seq_len, d_model)
         return self.out_proj(out)
 
+
 class MonotonicTransformerLayer(nn.Module):
     def __init__(self, d_model, n_heads):
         super().__init__()
@@ -36,9 +50,7 @@ class MonotonicTransformerLayer(nn.Module):
         self.norm1 = nn.LayerNorm(d_model)
         self.norm2 = nn.LayerNorm(d_model)
         self.ffn = nn.Sequential(
-            nn.Linear(d_model, d_model * 4),
-            nn.GELU(),
-            nn.Linear(d_model * 4, d_model)
+            nn.Linear(d_model, d_model * 4), nn.GELU(), nn.Linear(d_model * 4, d_model)
         )
 
     def forward(self, x):
@@ -46,8 +58,11 @@ class MonotonicTransformerLayer(nn.Module):
         x = self.norm2(x + self.ffn(x))
         return x
 
+
 class FinalTransformerModel(nn.Module):
-    def __init__(self, n_features, variant='A', d_model=32, n_heads=2, num_layers=2, T=20, K=2):
+    def __init__(
+        self, n_features, variant="A", d_model=32, n_heads=2, num_layers=2, T=20, K=2
+    ):
         super().__init__()
         self.T = T
         self.K = K
@@ -56,13 +71,18 @@ class FinalTransformerModel(nn.Module):
         self.feature_proj = nn.Linear(n_features, d_model)
         self.time_embeddings = nn.Parameter(torch.randn(T, d_model))
 
-        if variant == 'A':
+        if variant == "A":
             encoder_layer = nn.TransformerEncoderLayer(
-                d_model=d_model, nhead=n_heads, dim_feedforward=d_model*4, batch_first=True
+                d_model=d_model,
+                nhead=n_heads,
+                dim_feedforward=d_model * 4,
+                batch_first=True,
             )
             self.encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
-        elif variant == 'B':
-            layers = [MonotonicTransformerLayer(d_model, n_heads) for _ in range(num_layers)]
+        elif variant == "B":
+            layers = [
+                MonotonicTransformerLayer(d_model, n_heads) for _ in range(num_layers)
+            ]
             self.encoder = nn.Sequential(*layers)
 
         self.output_proj = nn.Linear(d_model, K + 1)
@@ -80,7 +100,9 @@ class FinalTransformerModel(nn.Module):
         hazards_causes = hazards[:, 1:, :]
 
         S_t = torch.cumprod(hazards_survival, dim=1)
-        S_t_minus_1 = torch.cat([torch.ones(batch_size, 1, device=x.device), S_t[:, :-1]], dim=1)
+        S_t_minus_1 = torch.cat(
+            [torch.ones(batch_size, 1, device=x.device), S_t[:, :-1]], dim=1
+        )
 
         cif_increments = hazards_causes * S_t_minus_1.unsqueeze(1)
         cif = torch.cumsum(cif_increments, dim=2)

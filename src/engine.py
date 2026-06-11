@@ -4,6 +4,7 @@ import torch.optim as optim
 import copy
 from src.models import FinalTransformerModel
 
+
 class CompetingRisksLoss(nn.Module):
     def __init__(self):
         super().__init__()
@@ -12,7 +13,9 @@ class CompetingRisksLoss(nn.Module):
     def forward(self, hazards, S_t, events, time_indices):
         batch_size = hazards.size(0)
         loss = 0.0
-        S_t_minus_1 = torch.cat([torch.ones(batch_size, 1, device=hazards.device), S_t[:, :-1]], dim=1)
+        S_t_minus_1 = torch.cat(
+            [torch.ones(batch_size, 1, device=hazards.device), S_t[:, :-1]], dim=1
+        )
 
         for i in range(batch_size):
             t_i = time_indices[i]
@@ -28,13 +31,30 @@ class CompetingRisksLoss(nn.Module):
 
         return loss / batch_size
 
-def train_model_with_history(variant_name, train_loader, val_loader, n_features, num_bins, max_epochs=200, patience=15):
+
+def train_model_with_history(
+    variant_name,
+    train_loader,
+    val_loader,
+    n_features,
+    num_bins,
+    max_epochs=200,
+    patience=15,
+):
     print(f"\n[Trainer] Запуск навчання для Variant {variant_name}...")
-    model = FinalTransformerModel(n_features=n_features, variant=variant_name, d_model=32, n_heads=2, num_layers=2, T=num_bins, K=2)
+    model = FinalTransformerModel(
+        n_features=n_features,
+        variant=variant_name,
+        d_model=32,
+        n_heads=2,
+        num_layers=2,
+        T=num_bins,
+        K=2,
+    )
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     criterion = CompetingRisksLoss()
 
-    best_val_loss = float('inf')
+    best_val_loss = float("inf")
     best_weights = None
     epochs_no_improve = 0
 
@@ -71,10 +91,14 @@ def train_model_with_history(variant_name, train_loader, val_loader, n_features,
             epochs_no_improve += 1
 
         if (epoch + 1) % 10 == 0 or epoch == 0:
-            print(f"  Епоха [{epoch+1:3d}/{max_epochs}] | Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}")
+            print(
+                f"  Епоха [{epoch+1:3d}/{max_epochs}] | Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}"
+            )
 
         if epochs_no_improve >= patience:
-            print(f"  [-] Рання зупинка на епосі {epoch+1}. Ваги найкращої епохи відновлено.")
+            print(
+                f"  [-] Рання зупинка на епосі {epoch+1}. Ваги найкращої епохи відновлено."
+            )
             break
 
     model.load_state_dict(best_weights)
