@@ -133,7 +133,11 @@ def plot_calibration_curves_survival(
     df_test: pd.DataFrame,
     bins: np.ndarray,
     target_time: float = 60.0,
+    max_limits: Dict[int, float] = None,
 ) -> None:
+
+    if max_limits is None:
+        max_limits = {1: 1.0, 2: 1.0}
 
     target_bin_idx = digitize_time(np.array([target_time]), bins)[0]
 
@@ -148,6 +152,9 @@ def plot_calibration_curves_survival(
     for cause in [1, 2]:
         ax = axes[cause - 1]
         y_test_cause = prepare_survival_data(df_test, cause)
+
+        # Отримуємо ліміт для поточної події (якщо немає в словнику, ставимо 1.0)
+        limit = max_limits.get(cause, 1.0)
 
         preds = {}
 
@@ -169,7 +176,7 @@ def plot_calibration_curves_survival(
             "Variant B (Монотонна)": "red",
         }
 
-        ax.plot([0, 1], [0, 1], "k--", label="Ідеальне калібрування")
+        ax.plot([0, limit], [0, limit], "k--", label="Ідеальне калібрування")
 
         for name, risk_probs in preds.items():
 
@@ -203,8 +210,10 @@ def plot_calibration_curves_survival(
         ax.set_title(f"Калібрування: Подія {cause} (на {target_time} місяців)")
         ax.set_xlabel("Прогнозована ймовірність (Predicted CIF)")
         ax.set_ylabel("Спостережувана ймовірність (Observed)")
-        ax.set_xlim(0, 1)
-        ax.set_ylim(0, 1)
+
+        ax.set_xlim(0, limit)
+        ax.set_ylim(0, limit)
+
         ax.grid(True, alpha=0.3)
         ax.legend(loc="lower right")
 
