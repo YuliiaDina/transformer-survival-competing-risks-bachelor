@@ -1,4 +1,3 @@
-# src/utils.py
 import torch
 
 def print_table_1(df_original):
