@@ -10,7 +10,7 @@ from src.data_prep import prepare_survival_data, digitize_time
 from src.metrics import compute_cox_cif
 from src.models import FinalTransformerModel
 
-def print_table_1_demographics(df_original):
+def build_table_1_demographics(df_original):
     """
     Таблиця 1: Описова статистика вибірки (Demographics).
     Повертає відформатований Pandas DataFrame для красивого виводу в Colab.
