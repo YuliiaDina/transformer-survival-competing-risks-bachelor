@@ -4,19 +4,14 @@ import torch
 import inspect
 import torch.optim as optim
 from sksurv.metrics import concordance_index_ipcw, integrated_brier_score, cumulative_dynamic_auc
-
-# Імпорти з твоїх власних модулів
 from src.data_prep import prepare_survival_data, digitize_time
 from src.metrics import compute_cox_cif
 from src.models import FinalTransformerModel
 
 def build_table_1_demographics(df_original):
-    """
-    Таблиця 1: Описова статистика вибірки (Demographics).
-    Повертає відформатований Pandas DataFrame для красивого виводу в Colab.
-    """
+    
     stats_data = []
-    # 1. Неперервні характеристики (Mean ± SD)
+    # Неперервні характеристики (Mean ± SD)
     for col in ['age', 'dxyr', 'hgb', 'creat', 'mspike']:
         mean_val = df_original[col].mean()
         sd_val = df_original[col].std()
@@ -25,7 +20,7 @@ def build_table_1_demographics(df_original):
             "Значення": f"{mean_val:.2f} ± {sd_val:.2f}"
         })
 
-    # 2. Стать (Кількість / Відсоток)
+    # Стать (Кількість / Відсоток)
     sex_counts = df_original['sex'].value_counts()
     sex_total = len(df_original)
     for sex_val, count in sex_counts.items():
@@ -34,16 +29,16 @@ def build_table_1_demographics(df_original):
             "Значення": f"{count} ({count/sex_total*100:.1f}%)"
         })
 
-    # 3. Розподіл подій
+    # Розподіл подій
     event_counts = df_original['event_type'].value_counts().sort_index()
     event_names = {0: "0 (Цензуровано)", 1: "1 (Прогресія)", 2: "2 (Смерть)"}
     for ev_code, count in event_counts.items():
         stats_data.append({
-            "Клінічна характеристика": f"Статус: {event_names[ev_code]}",
+            "Клінічна характеристика": f"Подія: {event_names[ev_code]}",
             "Значення": f"{count} ({count/sex_total*100:.1f}%)"
         })
 
-    # 4. Час спостереження
+    # Час спостереження
     median_time = df_original['time'].median()
     q1 = df_original['time'].quantile(0.25)
     q3 = df_original['time'].quantile(0.75)
@@ -52,16 +47,12 @@ def build_table_1_demographics(df_original):
         "Значення": f"{median_time:.1f} ({q1:.1f} - {q3:.1f})"
     })
 
-    # Створюємо DataFrame
     df_table1 = pd.DataFrame(stats_data)
     return df_table1
 
 
 def build_table_2_metrics(models_cox, models_fg_python, model_A_hist, model_B_hist, df_train, df_test, X_test_scaled, X_test_tensor, bins, brier_times, times_to_evaluate=[24, 60, 120]):
-    """
-    Таблиця 2: Зведена таблиця метрик (C-index, IBS, AUC).
-    Повертає відформатований Pandas DataFrame.
-    """
+
     unified_results = []
 
     model_A_hist.eval()
@@ -80,7 +71,7 @@ def build_table_2_metrics(models_cox, models_fg_python, model_A_hist, model_B_hi
         y_train_cause = prepare_survival_data(df_train, cause)
         y_test_cause = prepare_survival_data(df_test, cause)
 
-        # 1. Cox
+        # Cox
         model_cox = models_cox[cause]
         cox_risk_static = model_cox.predict(X_test_scaled)
         try: c_index_cox = concordance_index_ipcw(y_train_cause, y_test_cause, cox_risk_static)[0]
@@ -101,7 +92,7 @@ def build_table_2_metrics(models_cox, models_fg_python, model_A_hist, model_B_hi
             "AUC 2yr": auc_cox[0], "AUC 5yr": auc_cox[1], "AUC 10yr": auc_cox[2]
         })
 
-        # 2. Fine-Gray
+        # Fine-Gray
         if cause in models_fg_python:
             fg_model = models_fg_python[cause]
             try:
@@ -127,7 +118,7 @@ def build_table_2_metrics(models_cox, models_fg_python, model_A_hist, model_B_hi
                 "AUC 2yr": auc_fg[0], "AUC 5yr": auc_fg[1], "AUC 10yr": auc_fg[2]
             })
 
-        # 3. Трансформери
+        # Трансформери
         auc_time_indices = digitize_time(times_to_evaluate, bins)
         brier_time_indices = digitize_time(brier_times, bins)
         
@@ -159,10 +150,7 @@ def build_table_2_metrics(models_cox, models_fg_python, model_A_hist, model_B_hi
 
 
 def build_table_3_hyperparams(model_instance, batch_size=64, lr=0.001, num_bins=20, patience=15):
-    """
-    Таблиця 3: Гіперпараметри та налаштування експерименту.
-    Повертає Pandas DataFrame, витягуючи значення через інтроспекцію.
-    """
+    
     try: current_d_model = model_instance.feature_proj.out_features
     except AttributeError: current_d_model = "N/A"
 

@@ -5,7 +5,7 @@ from sksurv.nonparametric import kaplan_meier_estimator
 from src.data_prep import digitize_time, prepare_survival_data
 
 def plot_loss_curves(train_hist_A, val_hist_A, train_hist_B, val_hist_B):
-    """Будує графіки функції втрат під час навчання."""
+
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
     
     axes[0].plot(train_hist_A, label='Train Loss', color='blue', linewidth=2)
@@ -26,8 +26,9 @@ def plot_loss_curves(train_hist_A, val_hist_A, train_hist_B, val_hist_B):
     plt.tight_layout()
     plt.show()
 
+
 def plot_cif_comparison(models_cox, model_A, model_B, X_test_scaled, X_test_tensor, brier_times, bins):
-    """Будує порівняльні криві CIF для двох репрезентативних пацієнтів."""
+    
     patients_to_plot = X_test_scaled.iloc[0:2]
     patients_tensor = X_test_tensor[0:2]
 
@@ -50,7 +51,7 @@ def plot_cif_comparison(models_cox, model_A, model_B, X_test_scaled, X_test_tens
             ax.step(brier_times, cif_cox, where="post", color=colors['Cox'], linestyle=linestyle, alpha=0.7, linewidth=2, label=f'Cox (Подія {cause})' if i==0 else "")
 
             brier_time_indices = np.digitize(brier_times, bins) - 1
-            # Обмежуємо індекси, щоб не вийти за межі масиву
+            
             brier_time_indices = np.clip(brier_time_indices, 0, cif_A.shape[2] - 1)
 
             cif_A_plot = cif_A[i, cause-1, brier_time_indices].numpy()
@@ -70,7 +71,7 @@ def plot_cif_comparison(models_cox, model_A, model_B, X_test_scaled, X_test_tens
     plt.show()
 
 def get_observed_incidence(y_true, t_eval):
-    """Допоміжна функція для розрахунку реального % подій з урахуванням цензурування."""
+    
     times, survival_probs = kaplan_meier_estimator(y_true['event'], y_true['time'])
     valid_idx = np.where(times <= t_eval)[0]
     if len(valid_idx) == 0:
@@ -78,7 +79,7 @@ def get_observed_incidence(y_true, t_eval):
     return 1.0 - survival_probs[valid_idx[-1]]
 
 def plot_calibration_curves_survival(models_cox, model_A_hist, model_B_hist, X_test_scaled, X_test_tensor, df_test, bins, target_time=60):
-    """Будує графік калібрування моделей виживання для двох конкуруючих подій."""
+   
     target_bin_idx = digitize_time(np.array([target_time]), bins)[0]
 
     model_A_hist.eval()
@@ -93,7 +94,6 @@ def plot_calibration_curves_survival(models_cox, model_A_hist, model_B_hist, X_t
         ax = axes[cause - 1]
         y_test_cause = prepare_survival_data(df_test, cause)
 
-        # Збираємо прогнози CIF на визначений місяць
         preds = {}
 
         # Cox
@@ -111,7 +111,7 @@ def plot_calibration_curves_survival(models_cox, model_A_hist, model_B_hist, X_t
         ax.plot([0, 1], [0, 1], "k--", label="Ідеальне калібрування")
 
         for name, risk_probs in preds.items():
-            # Розбиваємо пацієнтів на 5 груп (квінтилів)
+            
             quantiles = np.quantile(risk_probs, np.linspace(0, 1, 6))
             quantiles[0] -= 1e-6
             quantiles[-1] += 1e-6
