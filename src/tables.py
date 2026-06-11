@@ -11,35 +11,51 @@ from src.metrics import compute_cox_cif
 from src.models import FinalTransformerModel
 
 def print_table_1_demographics(df_original):
-    """
+  """
     Таблиця 1: Описова статистика вибірки (Demographics).
-    Виводить відформатований текст у консоль.
+    Повертає відформатований Pandas DataFrame для красивого виводу в Colab.
     """
-    print("\033[4m Таблиця описової статистики (Table 1)\033[0m")
+    stats_data = []
 
-    print("\n[Характеристики пацієнтів (Mean ± SD)]")
+    # 1. Неперервні характеристики (Mean ± SD)
     for col in ['age', 'dxyr', 'hgb', 'creat', 'mspike']:
         mean_val = df_original[col].mean()
         sd_val = df_original[col].std()
-        print(f"- {col.upper()}: {mean_val:.2f} ± {sd_val:.2f}")
+        stats_data.append({
+            "Клінічна характеристика": col.upper(),
+            "Значення": f"{mean_val:.2f} ± {sd_val:.2f}"
+        })
 
+    # 2. Стать (Кількість / Відсоток)
     sex_counts = df_original['sex'].value_counts()
     sex_total = len(df_original)
-    print("\n[Стать (Кількість / Відсоток)]")
     for sex_val, count in sex_counts.items():
-        print(f"- Стать '{sex_val}': {count} ({count/sex_total*100:.1f}%)")
+        stats_data.append({
+            "Клінічна характеристика": f"Стать '{sex_val}'",
+            "Значення": f"{count} ({count/sex_total*100:.1f}%)"
+        })
 
-    print("\n[Розподіл подій]")
+    # 3. Розподіл подій
     event_counts = df_original['event_type'].value_counts().sort_index()
     event_names = {0: "0 (Цензуровано)", 1: "1 (Прогресія)", 2: "2 (Смерть)"}
     for ev_code, count in event_counts.items():
-        print(f"- {event_names[ev_code]}: {count} ({count/sex_total*100:.1f}%)")
+        stats_data.append({
+            "Клінічна характеристика": f"Статус: {event_names[ev_code]}",
+            "Значення": f"{count} ({count/sex_total*100:.1f}%)"
+        })
 
+    # 4. Час спостереження
     median_time = df_original['time'].median()
     q1 = df_original['time'].quantile(0.25)
     q3 = df_original['time'].quantile(0.75)
-    print(f"\n[Час спостереження (Місяці)]")
-    print(f"- Медіана (IQR): {median_time:.1f} ({q1:.1f} - {q3:.1f})")
+    stats_data.append({
+        "Клінічна характеристика": "Час спостереження, міс. [Медіана (IQR)]",
+        "Значення": f"{median_time:.1f} ({q1:.1f} - {q3:.1f})"
+    })
+
+    # Створюємо DataFrame
+    df_table1 = pd.DataFrame(stats_data)
+    return df_table1
 
 
 def build_table_2_metrics(models_cox, models_fg_python, model_A_hist, model_B_hist, df_train, df_test, X_test_scaled, X_test_tensor, bins, brier_times, times_to_evaluate=[24, 60, 120]):
