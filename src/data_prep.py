@@ -11,9 +11,9 @@ def load_and_prepare_data(url="https://raw.githubusercontent.com/vincentarelbund
     
     # Кодування подій та визначення часу
     conditions = [
-        (df['pstat'] == 1),                                  # Подія 1: Прогресія (PCM)
-        (df['death'] == 1) & (df['pstat'] == 0),             # Подія 2: Смерть без прогресії
-        (df['pstat'] == 0) & (df['death'] == 0)              # Подія 0: Цензурування
+        (df['pstat'] == 1),                     # Подія 1: Прогресія (PCM)
+        (df['death'] == 1) & (df['pstat'] == 0),# Подія 2: Смерть без прогресії
+        (df['pstat'] == 0) & (df['death'] == 0) # Подія 0: Цензурування
     ]
     choices_event = [1, 2, 0]
     choices_time = [df['ptime'], df['futime'], df['futime']]
