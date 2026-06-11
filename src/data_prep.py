@@ -33,9 +33,25 @@ def split_and_scale_data(
 ) -> Tuple[
     pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame
 ]:
+
+    # 1. Робимо копію, щоб не змінювати вхідний глобальний DataFrame
+    df_processed = df.copy()
+
+    # 2. кодуємо стать у числа
+    if "sex" in df_processed.columns:
+        df_processed["sex"] = (
+            df_processed["sex"].replace({"F": 0, "M": 1}).astype(float)
+        )
+
+    # 3. Видаляємо пропущені значення лише для тих фічей, які нам потрібні
+    df_processed.dropna(subset=features, inplace=True)
+
     # Тестова вибірка (20%)
     df_train_val, df_test = train_test_split(
-        df, test_size=0.20, stratify=df["event_type"], random_state=42
+        df_processed,
+        test_size=0.20,
+        stratify=df_processed["event_type"],
+        random_state=42,
     )
     # Валідаційна вибірка (10% від загального об'єму)
     df_train, df_val = train_test_split(
@@ -44,12 +60,6 @@ def split_and_scale_data(
         stratify=df_train_val["event_type"],
         random_state=42,
     )
-
-    # Нормалізація ознак
-    for data_frame in [df_train, df_val, df_test]:
-        if data_frame["sex"].dtype == "O":
-            data_frame["sex"] = data_frame["sex"].map({"F": 0, "M": 1})
-        data_frame.dropna(subset=features, inplace=True)
 
     X_train = df_train[features]
     X_val = df_val[features]
