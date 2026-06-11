@@ -11,12 +11,11 @@ from src.metrics import compute_cox_cif
 from src.models import FinalTransformerModel
 
 def print_table_1_demographics(df_original):
-  """
+    """
     Таблиця 1: Описова статистика вибірки (Demographics).
     Повертає відформатований Pandas DataFrame для красивого виводу в Colab.
     """
     stats_data = []
-
     # 1. Неперервні характеристики (Mean ± SD)
     for col in ['age', 'dxyr', 'hgb', 'creat', 'mspike']:
         mean_val = df_original[col].mean()
