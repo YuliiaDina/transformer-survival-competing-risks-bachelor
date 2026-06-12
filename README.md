@@ -30,6 +30,6 @@ If you wish to run the code locally or contribute to the repository, this projec
 2. Install dependencies:
   ```bash
   poetry install
-3.Run the analysis pipeline (or open the Jupyter Notebook locally):
+3. Run the analysis pipeline (or open the Jupyter Notebook locally):
   ```bash
   poetry run jupyter notebook
