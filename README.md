@@ -27,7 +27,9 @@ If you wish to run the code locally or contribute to the repository, this projec
    ```bash
    git clone [https://github.com/YuliiaDina/transformer-survival-competing-risks-bachelor.git](https://github.com/YuliiaDina/transformer-survival-competing-risks-bachelor.git)
    cd transformer-survival-competing-risks-bachelor
-2.Install dependencies:
+2. Install dependencies:
+  ```bash
   poetry install
 3.Run the analysis pipeline (or open the Jupyter Notebook locally):
+  ```bash
   poetry run jupyter notebook
