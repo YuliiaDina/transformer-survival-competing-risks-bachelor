@@ -1,6 +1,6 @@
 # Transformer-based Survival Analysis with Competing Risks
 
-This repository contains the official implementation of the code for the Bachelor Thesis at "Харківський Політехнічний Інститут".
+This repository contains the official implementation of the code for the Bachelor Thesis at National Technical University "Харківський Політехнічний Інститут".
 The project explores the application of Deep Learning, specifically **Transformer architectures**, to Survival Analysis in the presence of Competing Risks. It compares novel attention-based neural networks (Standard and Monotonic Attention) against classical statistical baselines like Cox Proportional Hazards and Fine-Gray Regression.
 
 
