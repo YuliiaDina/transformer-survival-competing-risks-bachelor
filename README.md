@@ -1,2 +1,1 @@
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/YuliiaDina/transformer-survival-competing-risks-bachelor
-/blob/main/main_notebook.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/YuliiaDina/transformer-survival-competing-risks-bachelor/blob/main/main_notebook.ipynb)
