@@ -27,8 +27,6 @@ If you wish to run the code locally or contribute to the repository, this projec
 1. Clone the repository:
    ```bash
    git clone [https://github.com/YuliiaDina/transformer-survival-competing-risks-bachelor.git](https://github.com/YuliiaDina/transformer-survival-competing-risks-bachelor.git)
-   
-   ```bash
    cd transformer-survival-competing-risks-bachelor
 2. Install dependencies:
    ```bash
