@@ -41,7 +41,7 @@ def split_and_scale_data(
     # 2. кодуємо стать у числа
     if "sex" in df_processed.columns:
         df_processed["sex"] = (
-            df_processed["sex"].replace({"F": 0, "M": 1}).astype(float)
+            df_processed["sex"].map({"F": 0, "M": 1}).astype(float)
         )
 
     # 3. Видаляємо пропущені значення лише для тих фічей, які нам потрібні
