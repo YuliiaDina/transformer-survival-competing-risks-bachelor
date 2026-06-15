@@ -8,6 +8,7 @@ import torch.nn as nn
 from sksurv.nonparametric import kaplan_meier_estimator
 
 from src.data_prep import digitize_time, prepare_survival_data
+from src.metrics import compute_cox_cif
 
 
 def plot_loss_curves(
@@ -51,6 +52,12 @@ def plot_cif_comparison(
     patients_to_plot = X_test_scaled.iloc[0:2]
     patients_tensor = X_test_tensor[0:2]
 
+    surv_fns_1 = models_cox[1].predict_survival_function(patients_to_plot)
+    surv_fns_2 = models_cox[2].predict_survival_function(patients_to_plot)
+    surv_fns_overall = [
+        (lambda t, i=i: surv_fns_1[i](t) * surv_fns_2[i](t)) for i in range(2)
+    ]
+
     model_A.eval()
     model_B.eval()
     with torch.no_grad():
@@ -65,8 +72,9 @@ def plot_cif_comparison(
         for cause in [1, 2]:
             linestyle = "--" if cause == 1 else "-"
 
-            surv_funcs = models_cox[cause].predict_survival_function(patients_to_plot)
-            cif_cox = 1 - surv_funcs[i](brier_times)
+            surv_fns_k = models_cox[cause].predict_survival_function(patients_to_plot)
+            cif_cox = compute_cox_cif(surv_fns_k, surv_fns_overall, brier_times)[i]
+
             ax.step(
                 brier_times,
                 cif_cox,
@@ -78,9 +86,9 @@ def plot_cif_comparison(
                 label=f"Cox (Подія {cause})" if i == 0 else "",
             )
 
-            brier_time_indices = np.digitize(brier_times, bins) - 1
-
-            brier_time_indices = np.clip(brier_time_indices, 0, cif_A.shape[2] - 1)
+            brier_time_indices = np.clip(
+                np.digitize(brier_times, bins) - 1, 0, cif_A.shape[2] - 1
+            )
 
             cif_A_plot = cif_A[i, cause - 1, brier_time_indices].numpy()
             ax.step(
