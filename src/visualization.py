@@ -157,6 +157,14 @@ def plot_calibration_curves_survival(
         _, _, cif_A_all = model_A_hist(X_test_tensor)
         _, _, cif_B_all = model_B_hist(X_test_tensor)
 
+    #Попередній розрахунок S_overall = S_1(t) * S_2(t) для всієї тестової вибірки
+    surv_fns_1 = models_cox[1].predict_survival_function(X_test_scaled)
+    surv_fns_2 = models_cox[2].predict_survival_function(X_test_scaled)
+    surv_fns_overall = [
+        (lambda t, i=i: surv_fns_1[i](t) * surv_fns_2[i](t))
+        for i in range(len(surv_fns_1))
+    ]
+
     fig, axes = plt.subplots(1, 2, figsize=(14, 6))
 
     for cause in [1, 2]:
@@ -168,9 +176,11 @@ def plot_calibration_curves_survival(
 
         preds = {}
 
-        # Cox
-        surv_funcs = models_cox[cause].predict_survival_function(X_test_scaled)
-        preds["Cox"] = np.array([1 - fn(target_time) for fn in surv_funcs])
+        # Рахуємо коректну CIF для Cox
+        surv_funcs_k = models_cox[cause].predict_survival_function(X_test_scaled)
+        cif_cox_at_t = compute_cox_cif(surv_funcs_k, surv_fns_overall, [target_time])
+        # Беремо [0] елемент, оскільки ми передали лише один момент часу [target_time]
+        preds["Cox"] = np.array([cif[0] for cif in cif_cox_at_t])
 
         # Variant A
         preds["Variant A (Стандартна)"] = cif_A_all[
