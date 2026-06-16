@@ -1,0 +1,74 @@
+[
+    {
+        "Model":"Cox",
+        "Event":1,
+        "C-index":0.6928,
+        "IBS":0.0716,
+        "AUC 2yr":0.7669,
+        "AUC 5yr":0.7279,
+        "AUC 10yr":0.672
+    },
+    {
+        "Model":"Fine-Gray",
+        "Event":1,
+        "C-index":0.6109,
+        "IBS":0.0734,
+        "AUC 2yr":0.6264,
+        "AUC 5yr":0.599,
+        "AUC 10yr":0.5931
+    },
+    {
+        "Model":"Transformer A",
+        "Event":1,
+        "C-index":0.605,
+        "IBS":0.0719,
+        "AUC 2yr":0.6364,
+        "AUC 5yr":0.6565,
+        "AUC 10yr":0.6641
+    },
+    {
+        "Model":"Transformer B",
+        "Event":1,
+        "C-index":0.5591,
+        "IBS":0.0714,
+        "AUC 2yr":0.7957,
+        "AUC 5yr":0.7172,
+        "AUC 10yr":0.611
+    },
+    {
+        "Model":"Cox",
+        "Event":2,
+        "C-index":0.7205,
+        "IBS":0.1624,
+        "AUC 2yr":0.6914,
+        "AUC 5yr":0.7351,
+        "AUC 10yr":0.8155
+    },
+    {
+        "Model":"Fine-Gray",
+        "Event":2,
+        "C-index":0.7191,
+        "IBS":0.1639,
+        "AUC 2yr":0.6907,
+        "AUC 5yr":0.7339,
+        "AUC 10yr":0.8101
+    },
+    {
+        "Model":"Transformer A",
+        "Event":2,
+        "C-index":0.7168,
+        "IBS":0.1585,
+        "AUC 2yr":0.7556,
+        "AUC 5yr":0.754,
+        "AUC 10yr":0.8183
+    },
+    {
+        "Model":"Transformer B",
+        "Event":2,
+        "C-index":0.711,
+        "IBS":0.158,
+        "AUC 2yr":0.77,
+        "AUC 5yr":0.7559,
+        "AUC 10yr":0.8111
+    }
+]
