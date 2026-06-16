@@ -1,5 +1,5 @@
 import copy
-from typing import List, Tuple,Optional,Dict,Any
+from typing import List, Tuple, Optional, Dict, Any
 
 import torch
 import torch.nn as nn
@@ -34,10 +34,15 @@ class CompetingRisksLoss(nn.Module):
             if k_i > 0:
                 h_k = hazards[i, k_i, t_i]
                 s_prev = S_t_minus_1[i, t_i]
-                loss -= torch.log(h_k + self.eps) + torch.log(s_prev + self.eps)
+                # ЗМІНА: torch.clamp для жорсткого обмеження знизу
+                loss -= torch.log(torch.clamp(h_k, min=self.eps)) + torch.log(
+                    torch.clamp(
+                        s_prev, min=self.eps
+                    )  # гарант, що логарифм ніколи не отримає 0 або від'ємне число.
+                )
             else:
                 s_curr = S_t[i, t_i]
-                loss -= torch.log(s_curr + self.eps)
+                loss -= torch.log(torch.clamp(s_curr, min=self.eps))  # Аналогічно
 
         return loss / batch_size
 
@@ -73,25 +78,47 @@ def train_model_with_history(
 
     for epoch in range(max_epochs):
         model.train()
-        train_loss:float = 0.0
+        train_loss: float = 0.0
         for batch_X, batch_events, batch_times in train_loader:
             optimizer.zero_grad()
             hazards, S_t, _ = model(batch_X)
             loss = criterion(hazards, S_t, batch_events, batch_times)
+            # ЗМІНА: Запобіжник від NaN колапсу
+            if torch.isnan(loss):
+                print(
+                    f"\n[!] Увага: Loss став NaN на епосі {epoch+1}. Переривання батчу."
+                )
+                break
             loss.backward()
+
+            # ЗМІНА: Gradient Clipping
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+
             optimizer.step()
             train_loss += loss.item()
         train_loss /= len(train_loader)
         train_history.append(train_loss)
 
         model.eval()
-        val_loss:float = 0.0
+        val_loss: float = 0.0
+        valid_batches: int = 0  # лічильник успішних батчів
         with torch.no_grad():
             for batch_X, batch_events, batch_times in val_loader:
                 hazards, S_t, _ = model(batch_X)
                 loss = criterion(hazards, S_t, batch_events, batch_times)
-                val_loss += loss.item()
-        val_loss /= len(val_loader)
+
+                if not torch.isnan(loss):
+                    val_loss += loss.item()
+                    valid_batches += 1
+                else:
+                    print(f"\n[!] Увага: Val Loss став NaN. Батч пропущено.")
+
+                # Уникаємо ділення на нуль, якщо раптом всі батчі були NaN
+        if valid_batches > 0:
+            val_loss /= valid_batches
+        else:
+            val_loss = float("inf")
+
         val_history.append(val_loss)
 
         if val_loss < best_val_loss:
